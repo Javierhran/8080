@@ -5,6 +5,13 @@ class Intel8080 {
     }
 
     reset() {
+        this.fpu = {
+            a: 0,
+            b: 0,
+            result: 0,
+            error: false
+        };
+
         this.registers = {
             a: 0,
             b: 0,
@@ -28,8 +35,68 @@ class Intel8080 {
             this.memory.fill(0);
         }
     }
+    readFloat(addr) {
+        addr &= 0xFFFF;
+        if (addr > 65532) {
+            throw new Error("El número requiere 4 bytes dentro de la memoria.");
+        }
+        const dv = new DataView(this.memory.buffer);
+        return dv.getFloat32(addr, true);
+    }
 
+    writeFloat(addr, val) {
+        addr &= 0xFFFF;
+        if (addr > 65532) {
+            throw new Error("El número requiere 4 bytes dentro de la memoria.");
+        }
+        const dv = new DataView(this.memory.buffer);
+        dv.setFloat32(addr, val, true);
+    }
+    fpuExecute(opcode) {
+        this.fpu.error = false;
+        this.fpu.result = 0;
+
+        try {
+            const addrA = this.getRP('hl');
+            const addrB = this.getRP('de');
+            const a = this.readFloat(addrA);
+            const b = this.readFloat(addrB);
+
+            this.fpu.a = a;
+            this.fpu.b = b;
+
+            if (!Number.isFinite(a) || !Number.isFinite(b)) {
+                throw new Error("Los operandos deben ser números finitos.");
+            }
+
+            let r;
+            switch (opcode & 0x03) {
+                case 0: r = a + b; break;
+                case 1: r = a - b; break;
+                case 2: r = a * b; break;
+                case 3:
+                    if (b === 0) {
+                        throw new Error("No se puede dividir entre cero.");
+                    }
+                    r = a / b;
+                    break;
+            }
+
+            r = Math.fround(r);
+
+            if (!Number.isFinite(r)) {
+                throw new Error("El resultado excede el rango permitido.");
+            }
+
+            this.writeFloat(addrA, r);
+            this.fpu.result = r;
+        } catch (error) {
+            this.fpu.error = true;
+            this.fpu.result = null;
+        }
+    }
     getRP(rp) {
+        
         switch (rp) {
             case 'bc': return (this.registers.b << 8) | this.registers.c;
             case 'de': return (this.registers.d << 8) | this.registers.e;
@@ -138,6 +205,16 @@ class Intel8080 {
     }
 
     execute(opcode) {
+                // Enviar operaciones al coprocesador mediante OUT
+        if (opcode === 0xD3) {
+            const port = this.fetch();
+
+            if (port >= 0xE0 && port <= 0xE3) {
+                this.fpuExecute(port - 0xE0);
+            }
+
+            return;
+        }
         // MOV
         if (opcode >= 0x40 && opcode <= 0x7F && opcode !== 0x76) {
             this.setRegByCode((opcode >> 3) & 0x07, this.getRegByCode(opcode & 0x07));

@@ -27,6 +27,19 @@ function updateUI() {
     document.getElementById('status-badge').textContent = cpu.halted ? 'Halted' : (runInterval ? 'Running' : 'Idle');
     document.getElementById('status-badge').style.backgroundColor = cpu.halted ? '#fee2e2' : (runInterval ? '#f0fdf4' : '#e2e8f0');
 
+        // Actualizar el panel del coprocesador
+    document.getElementById('fpu-a').textContent = cpu.fpu.a;
+    document.getElementById('fpu-b').textContent = cpu.fpu.b;
+
+    document.getElementById('fpu-result').textContent =
+        cpu.fpu.error ? '—' : cpu.fpu.result;
+
+    const fpuStatus = document.getElementById('fpu-status');
+    fpuStatus.textContent = cpu.fpu.error
+        ? 'Error en la operación'
+        : 'Sin errores';
+
+    fpuStatus.style.color = cpu.fpu.error ? '#dc2626' : '#15803d';
     renderMemory();
     renderStack();
 }

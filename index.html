@@ -83,7 +83,36 @@ HLT"></textarea>
                         <div id="stack-table"></div>
                     </div>
                 </div>
+                                <div class="card" id="fpu-panel"
+                     style="grid-column: 1 / -1;">
+                    <h3>Coprocesador de punto flotante (FPU)</h3>
+                    <p>Simulación conceptual con números de 32 bits.</p>
 
+                    <div class="reg-row">
+                        <div class="reg-box">
+                            <span>Operando A</span>
+                            <div id="fpu-a">0</div>
+                        </div>
+                        <div class="reg-box">
+                            <span>Operando B</span>
+                            <div id="fpu-b">0</div>
+                        </div>
+                        <div class="reg-box">
+                            <span>Resultado</span>
+                            <div id="fpu-result">0</div>
+                        </div>
+                    </div>
+
+                    <p>Estado:
+                        <strong id="fpu-status" role="status">
+                            Sin operaciones
+                        </strong>
+                    </p>
+                    <p>
+                        OUT 0E0H: suma · OUT 0E1H: resta ·
+                        OUT 0E2H: multiplicación · OUT 0E3H: división
+                    </p>
+                </div>
                 <div class="card memory">
                     <h3>Memory View</h3>
                     <div class="mem-controls">
